@@ -49,6 +49,7 @@
             align-items: center;
             gap: 15px;
             margin-bottom: 20px;
+            flex-wrap: wrap; /* Mobil için sığmazsa alt satıra geç */
         }
         #search-input {
             padding: 10px 15px;
@@ -56,6 +57,7 @@
             border: 1px solid var(--border-color);
             width: 300px;
             font-size: 1em;
+            flex-grow: 1; /* Esneklik kazandırır */
         }
         #clear-db-btn {
             background-color: var(--danger-color);
@@ -134,7 +136,7 @@
         .modal-header h2 { margin: 0; font-size: 1.5em; }
         .modal-close-btn { background: none; border: none; font-size: 2em; cursor: pointer; color: #888; }
         .modal-body { padding-top: 20px; }
-        #modal-summary { display: flex; gap: 15px; justify-content: space-around; text-align: center; margin-bottom: 25px; }
+        #modal-summary { display: flex; gap: 15px; justify-content: space-around; text-align: center; margin-bottom: 25px; flex-wrap: wrap; }
         .summary-item { padding: 10px; border-radius: 8px; flex-grow: 1; }
         .summary-item .label { font-size: 0.9em; font-weight: 500; }
         .summary-item .value { font-size: 1.8em; font-weight: 700; }
@@ -151,6 +153,45 @@
         .q-option { padding: 8px 12px; border-radius: 6px; border: 1px solid transparent; font-size: 0.95em; }
         .q-option.correct-answer { background-color: #eaf6ec; border-color: var(--success-color); color: var(--success-color); font-weight: 600; }
         .q-option.student-answer-incorrect { background-color: #fdeded; border-color: var(--danger-color); color: var(--danger-color); font-weight: 600; text-decoration: line-through; }
+        
+        /* YENİ: MOBİL UYUMLULUK (RESPONSIVE) STİLLERİ */
+        @media (max-width: 768px) {
+            .container { padding: 0 15px; }
+            .top-header h1 { font-size: 1.4em; }
+            .controls { flex-direction: column; align-items: stretch; }
+            #search-input { width: 100%; }
+
+            /* Tabloyu kart yapısına dönüştürme */
+            .results-table { border: none; box-shadow: none; border-radius: 0;}
+            .results-table thead { display: none; }
+            .results-table tbody, .results-table tr { display: block; width: 100%; }
+            .results-table tr {
+                background-color: var(--card-background);
+                border-radius: 12px;
+                box-shadow: var(--shadow);
+                margin-bottom: 15px;
+                border: 1px solid var(--border-color);
+            }
+            .results-table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 15px;
+                border: none;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .results-table tr td:last-child { border-bottom: none; }
+
+            /* Her hücrenin başına başlığını ekleme */
+            .results-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #555;
+            }
+
+            .modal-content { padding: 20px; }
+            .modal-header h2 { font-size: 1.3em; }
+        }
     </style>
 </head>
 <body>
@@ -225,17 +266,19 @@
             });
         });
 
+        // YENİ: Mobil uyumluluk için satır oluşturma fonksiyonu güncellendi
         function createTableRow(sonuc) {
             const tarih = sonuc.tarih ? new Date(sonuc.tarih.seconds * 1000).toLocaleString('tr-TR') : 'Bilinmiyor';
             const satir = document.createElement('tr');
+            // Her hücreye "data-label" özelliği eklendi. Bu, CSS'in mobil görünümde başlıkları göstermesini sağlar.
             satir.innerHTML = `
-                <td class="student-name">${sonuc.isim} ${sonuc.soyisim}</td>
-                <td>${tarih}</td>
-                <td class="dogru">${sonuc.dogruSayisi}</td>
-                <td class="yanlis">${sonuc.yanlisSayisi}</td>
-                <td>${sonuc.bosSayisi}</td>
-                <td class="net">${sonuc.netSayisi}</td>
-                <td><button class="details-btn" data-id="${sonuc.id}">Detayları Gör</button></td>
+                <td class="student-name" data-label="Öğrenci">${sonuc.isim} ${sonuc.soyisim}</td>
+                <td data-label="Tarih">${tarih}</td>
+                <td class="dogru" data-label="Doğru">${sonuc.dogruSayisi}</td>
+                <td class="yanlis" data-label="Yanlış">${sonuc.yanlisSayisi}</td>
+                <td data-label="Boş">${sonuc.bosSayisi}</td>
+                <td class="net" data-label="Net">${sonuc.netSayisi}</td>
+                <td data-label="İşlem"><button class="details-btn" data-id="${sonuc.id}">Detayları Gör</button></td>
             `;
             return satir;
         }
@@ -318,8 +361,7 @@
                 });
             }
         });
-
-        // === YENİ: Veritabanı Temizleme Fonksiyonelliği ===
+        
         const clearDbBtn = document.getElementById('clear-db-btn');
         clearDbBtn.addEventListener('click', async () => {
             const confirm1 = confirm("DİKKAT: Tüm öğrenci sonuçları veritabanından kalıcı olarak silinecektir. Bu işlem geri alınamaz. Emin misiniz?");
